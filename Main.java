@@ -4,31 +4,33 @@ import java.io.FileNotFoundException;
 import java.util.Iterator;
 
 public class Main {
+
+    public static int timer = 0;
+    public static PCBQueue readyQueue = new PCBQueue();
     public static void main(String[] args) throws FileNotFoundException {
 
         // reads from the data file
         Scanner filein = new Scanner(
             new File("data_assn2.txt"));
         
-        PCBQueue readyQueue = new PCBQueue();
-
-        int timer = 0;
-
         double totalWaitTime = 0;
         double totalResponseTime = 0;
         double totalTAT = 0;
         
         PCB upcomingProcess = new PCB(0, Status.READY, 0, 0, 0);
+        PCB processingTask = new PCB(0, Status.READY, 0, 0, 0);
+
 
         if (filein.hasNext()) {
-            upcomingProcess = getProcess(filein, readyQueue); // getting the first process as it will be checked for enque eligibility
+            processingTask = getProcess(filein, readyQueue); // getting the first process as it will be checked for enque eligibility
+            upcomingProcess = getProcess(filein, readyQueue);
         }
 
         double processes = 1.0; // to avoid hard integer division
 
         System.out.printf("%-15s %-15s %-15s %-15s %-15s %-15s %-15s%n", "PID", "Burst", "Arrival", "Completion", "Turnaround", "Waiting", "Response");
 
-
+        
         while (filein.hasNext() || !readyQueue.isEmpty()) {
             // does not allow the upcoming process to enqueue if its arrival is below the current program's timer
             if (upcomingProcess.getArrival() == timer && filein.hasNext()) {
@@ -40,7 +42,10 @@ public class Main {
                 processes++;
             }
 
-            PCB processingTask = readyQueue.runNextProcess();
+            if (!readyQueue.isEmpty() && processingTask.getCurrentBurst() > readyQueue.peek().getCurrentBurst()) {
+                processingTask = readyQueue.runNextProcess();
+            }
+
 
             // to avoid touching the response time when there was already a response
             // for the process
@@ -85,10 +90,9 @@ public class Main {
                 totalResponseTime+=processingTask.getResponse();
 
                 System.out.printf("%-15d %-15d %-15d %-15d %-15d %-15d %-15d%n",processingTask.getPID(), processingTask.getBurst(), processingTask.getArrival(), processingTask.getCompletion(), processingTask.getTAT(), processingTask.getWait(), processingTask.getResponse());
+                processingTask=readyQueue.runNextProcess();
                 continue;
 
-            } else {
-                readyQueue.put(processingTask);
             }
             timer++;
         }

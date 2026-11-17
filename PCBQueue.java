@@ -36,6 +36,10 @@ public class PCBQueue {
         return readyQueue.iterator();
     }
 
+    public PCB peek() {
+        return readyQueue.peek();
+    }
+
     @Override
     public String toString() {
         return readyQueue.toString();
